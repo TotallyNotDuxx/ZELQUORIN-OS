@@ -1,39 +1,57 @@
 
 name: Build ZELQUORIN for iPad
+
 on:
   workflow_dispatch:
   push:
     branches: [main]
+
 permissions:
   contents: read
+
 jobs:
   build:
     runs-on: macos-15
+
     steps:
       - uses: actions/checkout@v4
+
       - name: Extract project
-        run: unzip -q ZELQUORIN-OS-iPad-Edition-0.4.0.zip
+        run: unzip -q ZELQUORIN-OS-iPad-Edition-0.4.1.zip
+
       - name: Show Xcode version
         run: xcodebuild -version
+
       - name: Test arithmetic and geometry
         working-directory: ZELQUORIN-iPad-Edition
         run: |
           swiftc ZELQUORIN/Arithmetic.swift Tests/main.swift -o /tmp/zelquorin-tests
           /tmp/zelquorin-tests
+
       - name: Build ZELQUORIN
         working-directory: ZELQUORIN-iPad-Edition
         run: |
-          xcodebuild -project ZELQUORIN.xcodeproj -scheme ZELQUORIN -configuration Release -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+          xcodebuild \
+            -project ZELQUORIN.xcodeproj \
+            -scheme ZELQUORIN \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+
       - name: Verify version and create IPA
         run: |
           mkdir -p Payload
           cp -R ZELQUORIN-iPad-Edition/build/Build/Products/Release-iphoneos/ZELQUORIN.app Payload/
           VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Payload/ZELQUORIN.app/Info.plist)
           echo "Compiled version: $VERSION"
-          test "$VERSION" = "0.4.0"
-          zip -qry ZELQUORIN-0.4.0-iPad-unsigned.ipa Payload
+          test "$VERSION" = "0.4.1"
+          zip -qry ZELQUORIN-0.4.1-iPad-unsigned.ipa Payload
+
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: ZELQUORIN-0.4.0-iPad-unsigned
-          path: ZELQUORIN-0.4.0-iPad-unsigned.ipa
+          name: ZELQUORIN-0.4.1-iPad-unsigned
+          path: ZELQUORIN-0.4.1-iPad-unsigned.ipa
