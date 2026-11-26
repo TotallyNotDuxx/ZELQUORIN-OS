@@ -17,12 +17,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Extract project
-        run: unzip -q ZELQUORIN-OS-iPad-Edition-0.3.1.zip
+        run: unzip -q ZELQUORIN-OS-iPad-Edition-0.3.2.zip
 
-      - name: Show Xcode version
-        run: xcodebuild -version
-
-      - name: Test arithmetic
+      - name: Test arithmetic and geometry
         working-directory: ZELQUORIN-iPad-Edition
         run: |
           swiftc ZELQUORIN/Arithmetic.swift Tests/main.swift -o /tmp/zelquorin-tests
@@ -41,14 +38,17 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             build
 
-      - name: Create IPA
+      - name: Verify version and create IPA
         run: |
           mkdir -p Payload
           cp -R ZELQUORIN-iPad-Edition/build/Build/Products/Release-iphoneos/ZELQUORIN.app Payload/
-          zip -qry ZELQUORIN-iPad-unsigned.ipa Payload
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Payload/ZELQUORIN.app/Info.plist)
+          echo "Compiled version: $VERSION"
+          test "$VERSION" = "0.3.2"
+          zip -qry ZELQUORIN-0.3.2-iPad-unsigned.ipa Payload
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: ZELQUORIN-iPad-unsigned
-          path: ZELQUORIN-iPad-unsigned.ipa
+          name: ZELQUORIN-0.3.2-iPad-unsigned
+          path: ZELQUORIN-0.3.2-iPad-unsigned.ipa
